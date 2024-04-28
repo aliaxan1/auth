@@ -25,7 +25,8 @@ const sendEmail = async (email: string[], subject: string, text: string) => {
             },
           });
         const mailResponse = await transporter.sendMail(mailOptions);
-        return mailResponse;
+        console.log("Message sent: %s", mailResponse.messageId);
+
     } catch (error) {
         console.error(error);
     }
