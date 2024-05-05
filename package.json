@@ -12,13 +12,15 @@
     "@prisma/client": "latest",
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^6.4.14",
+    "@types/uuid": "^9.0.8",
     "bcryptjs": "^2.4.3",
     "next": "14.2.2",
     "nodemailer": "^6.9.13",
     "prisma": "latest",
     "react": "^18",
     "react-dom": "^18",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "typescript": "^5",

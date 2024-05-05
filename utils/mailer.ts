@@ -1,38 +1,73 @@
 import nodemailer from 'nodemailer';
+import bcryptjs from 'bcryptjs';
+import { PrismaClient} from '@prisma/client';
+import { User } from './types';
+
+const prisma = new PrismaClient();
 
 
 
 
 
-const sendEmail = async (email: string[], subject: string, text: string) => {
-    // Configure mail for usage
+
+const sendEmail = async (user: User, emailType: string) => {
+  const hashedToken = await bcryptjs.hash(user?.id, 10)
+
+  if (emailType === "VERIFY") {
+    await prisma.user.update({
+      where: {
+        id: user?.id
+      },
+      data: {
+        verifyToken: hashedToken,
+        verifyTokenExpiry: (Date.now() + 3600000).toString()
+      }
+    })
+  } else if (emailType === "RESET") {
+    await prisma.user.update({
+      where: {
+        id: user?.id
+      },
+      data: {
+        forgotPasswordToken: hashedToken,
+        forgotPasswordTokenExpiry: (Date.now() + 3600000).toString()
+      }
+    })
+  }
+
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASSWORD,
+      }
+    });
+
+    console.log("trasporter--->",transporter);
+
     const mailOptions = {
-        from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>', // sender address
-        to: email, // list of receivers
-        subject: subject, // Subject line
-        text: text, // plain text body
-        html: "<b>Hello world?</b>", // html body
-      };
-      
-    try {
-        const transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, // Use `true` for port 465, `false` for all other ports
-            auth: {
-              user: "maddison53@ethereal.email",
-              pass: "jn7jnAPss4f63QBp6D",
-            },
-          });
-        const mailResponse = await transporter.sendMail(mailOptions);
-        return mailResponse;
-    } catch (error) {
-        console.error(error);
+      from: 'hitesh@gmail.com',
+      to: user?.email,
+      subject: emailType === "VERIFY" ? "Verify your email" : "Reset your password",
+      html: `<p>Click <a href="${process.env.DOMAIN}/verifyemail?token=${hashedToken}">here</a> to ${emailType === "VERIFY" ? "verify your email" : "reset your password"}
+      or copy and paste the link below in your browser. <br> ${process.env.DOMAIN}/verifyemail?token=${hashedToken}
+      </p>`
     }
+
+    const mailresponse = await transporter.sendMail(mailOptions);
+    console.log("mailResponse--->",mailresponse);
+    return mailresponse;
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 
 
 export {
-    sendEmail,
+  sendEmail,
 }
